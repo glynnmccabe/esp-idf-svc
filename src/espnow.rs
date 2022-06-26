@@ -2,16 +2,18 @@ use ::log::info;
 
 use alloc::boxed::Box;
 
-use esp_idf_hal::mutex::Mutex;
+use esp_idf_hal::mutex::{Mutex, RawMutex};
 use esp_idf_sys::*;
 
 type Singleton<T> = Mutex<Option<Box<T>>>;
 
-static RECV_CALLBACK: Singleton<dyn FnMut(&[u8], &[u8]) + Send> = Mutex::new(None);
-static SEND_CALLBACK: Singleton<dyn FnMut(&[u8], SendStatus) + Send> = Mutex::new(None);
+static RECV_CALLBACK: Singleton<dyn FnMut(&[u8], &[u8]) + Send> =
+    Mutex::wrap(RawMutex::new(), None);
+static SEND_CALLBACK: Singleton<dyn FnMut(&[u8], SendStatus) + Send> =
+    Mutex::wrap(RawMutex::new(), None);
 
 pub static BROADCAST: [u8; 6] = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
-static TAKEN: Mutex<bool> = Mutex::new(false);
+static TAKEN: Mutex<bool> = Mutex::wrap(RawMutex::new(), false);
 
 #[derive(Debug)]
 pub enum SendStatus {
